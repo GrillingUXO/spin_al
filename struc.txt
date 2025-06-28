@@ -1,0 +1,27 @@
+SpineViewerTest/
+│
+├── SpineViewer-main/
+│   ├── SFMLRenderer/  
+│   │   ├── /
+│   │   
+│   └── Spine/    
+│   │   ├── SpineObject.cs
+│   │   ├── SpineVersion.cs
+│   │   ├── /
+│   │  
+│   │   
+│   └── SpineRuntimes/    
+│   │   ├── /
+│   │   
+│   └── SpineViewers/    
+│   │   ├── /
+│   │  
+│   ├── SpineControlServer.cs
+│   │
+│   ├── SpineObjectAdapter.cs 
+│   │   
+│   ├── ISpineViewer.cs 
+│   │   
+
+
+

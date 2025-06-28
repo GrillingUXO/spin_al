@@ -1,0 +1,73 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build-release:
+    runs-on: windows-latest
+    env:
+      PROJECT_NAME: SpineViewer
+      VERSION: ${{ github.ref_name }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Publish FrameworkDependent version
+        run: |
+          dotnet publish ${{ env.PROJECT_NAME }}/${{ env.PROJECT_NAME }}.csproj -c Release -r win-x64 --sc false -o publish/${{ env.PROJECT_NAME }}-${{ env.VERSION }}
+      
+      - name: Publish SelfContained version
+        run: |
+          dotnet publish ${{ env.PROJECT_NAME }}/${{ env.PROJECT_NAME }}.csproj -c Release -r win-x64 --sc true -o publish/${{ env.PROJECT_NAME }}-${{ env.VERSION }}-SelfContained
+      
+      - name: Create release directory
+        run: mkdir release
+      
+      - name: Compress FrameworkDependent version
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "publish/${env:PROJECT_NAME}-${env:VERSION}" -DestinationPath "release/${env:PROJECT_NAME}-${env:VERSION}.zip" -Force
+      
+      - name: Compress SelfContained version
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "publish/${env:PROJECT_NAME}-${env:VERSION}-SelfContained" -DestinationPath "release/${env:PROJECT_NAME}-${env:VERSION}-SelfContained.zip" -Force
+      
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.VERSION }}
+          release_name: Release ${{ env.VERSION }}
+          draft: false
+          prerelease: false
+      
+      - name: Upload FrameworkDependent zip
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release/${{ env.PROJECT_NAME }}-${{ env.VERSION }}.zip
+          asset_name: ${{ env.PROJECT_NAME }}-${{ env.VERSION }}.zip
+          asset_content_type: application/zip
+      
+      - name: Upload SelfContained zip
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release/${{ env.PROJECT_NAME }}-${{ env.VERSION }}-SelfContained.zip
+          asset_name: ${{ env.PROJECT_NAME }}-${{ env.VERSION }}-SelfContained.zip
+          asset_content_type: application/zip
